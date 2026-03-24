@@ -87,12 +87,24 @@
             <a href="#" onclick="closeGalleryPage()" class="font-sans text-xl tracking-[0.2em] text-laki-black">
                 <span class="font-bold">LAKI</span><span class="font-light">PHOTO</span>
             </a>
+            
+            <!-- Desktop Menu -->
             <div class="hidden md:flex space-x-8 text-xs tracking-[0.15em] uppercase text-laki-slate items-center">
                 <a href="#" onclick="closeGalleryPage(); setTimeout(() => document.getElementById('produk').scrollIntoView(), 100)" class="hover:text-laki-black transition">Pilihan Produk</a>
                 <a href="https://wa.me/6281234567890" target="_blank" class="hover:text-laki-black transition">WhatsApp Kami</a>
             </div>
+            
             <!-- Mobile Menu Icon -->
-            <button class="md:hidden text-laki-slate text-xl"><i class="fas fa-bars"></i></button>
+            <button id="mobile-menu-btn" class="md:hidden text-laki-slate text-xl focus:outline-none"><i class="fas fa-bars transition-all duration-300"></i></button>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-t border-laki-soft/20 shadow-md transition-all duration-300 origin-top">
+            <div class="flex flex-col px-6 py-6 space-y-6 text-sm tracking-[0.15em] uppercase text-laki-slate text-center">
+                <a href="#" onclick="toggleMobileMenu(); closeGalleryPage(); setTimeout(() => document.getElementById('produk').scrollIntoView(), 100)" class="hover:text-laki-black transition block">Pilihan Produk</a>
+                <div class="w-8 h-px bg-laki-soft/30 mx-auto"></div>
+                <a href="https://wa.me/6281234567890" target="_blank" onclick="toggleMobileMenu()" class="hover:text-laki-black transition block">WhatsApp Kami</a>
+            </div>
         </div>
     </nav>
 
@@ -234,7 +246,6 @@
                     <img src="https://images.unsplash.com/photo-1583939411023-14783179e581?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
                 </div>
                 <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="studio" onclick="openLightbox(this)">
-                    <!-- Ganti gambar error dengan potret studio yang baru -->
                     <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
                 </div>
                 <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="wedding" onclick="openLightbox(this)">
@@ -247,7 +258,6 @@
                     <img src="https://images.unsplash.com/photo-1544078751-58fee2d8a03b?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
                 </div>
                 <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="studio" onclick="openLightbox(this)">
-                    <!-- Ganti gambar error dengan potret studio yang baru -->
                     <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
                 </div>
                 <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="intimate" onclick="openLightbox(this)">
@@ -322,6 +332,24 @@
 
     <!-- Scripts for Interactivity -->
     <script>
+        // --- 0. Mobile Menu Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = mobileMenuBtn.querySelector('i');
+
+        function toggleMobileMenu() {
+            mobileMenu.classList.toggle('hidden');
+            if (mobileMenu.classList.contains('hidden')) {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+            } else {
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+            }
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+
         // --- 1. SPA / Page Switcher Logic ---
         const homePage = document.getElementById('home-page');
         const galleryPage = document.getElementById('gallery-page');
