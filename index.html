@@ -1,677 +1,539 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Instagram, Music2, MessageCircle, ArrowLeft, X, Play, ChevronRight, Menu, ChevronDown } from 'lucide-react';
-
-// --- STYLES & FONTS ---
-const styles = `
-  /* Menambahkan Playfair Display untuk font serif italic yang elegan pada footer dan Playwrite AT (Österreich) untuk aksen */
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&family=Playwrite+AT&family=Poppins:wght@300;400;500;600;700&display=swap');
-
-  :root {
-    --bg-main: #f4f5f9;
-    --primary: #185b98;
-    --secondary: #3d85c6;
-    --accent: #9bafb5;
-    --text-body: #100f0f;
-  }
-
-  body {
-    background-color: var(--bg-main);
-    color: var(--text-body);
-    font-family: 'Inter', 'Myriad Pro', sans-serif; /* Fallback for Myriad Pro */
-    overflow-x: hidden;
-  }
-
-  h1, h2, h3, h4, h5, h6, .font-poppins {
-    font-family: 'Poppins', sans-serif;
-  }
-
-  .font-cherolina {
-    font-family: 'Playwrite AT', cursive;
-    font-weight: 400;
-  }
-
-  .font-playfair {
-    font-family: 'Playfair Display', serif;
-  }
-
-  /* Masonry Grid */
-  .masonry-grid {
-    column-count: 1;
-    column-gap: 1rem;
-  }
-  @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
-  @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
-  
-  .masonry-item {
-    break-inside: avoid;
-    margin-bottom: 1rem;
-  }
-
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: var(--bg-main); }
-  ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-`;
-
-// --- MOCK DATA ---
-const waNumber = "6281546561774"; // Ganti dengan nomor asli
-const waMessage = "Halo Lakiphoto, saya tertarik untuk mendiskusikan layanan...";
-const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMessage)}`;
-
-const heroImages = [
-  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=2000",
-  "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=2000",
-  "https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=2000"
-];
-
-const bannerImages = [
-  "https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=2000",
-  "https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=2000",
-  "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=2000"
-];
-
-const categoriesData = {
-  wedding: {
-    id: 'wedding',
-    title: 'Wedding',
-    cover: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&q=80&w=800',
-    desc: 'Dokumentasi hari bahagia dengan sentuhan elegan dan abadi.',
-    hasVideo: true,
-    videoId: 'V__GOHvb0X8',
-    images: [
-      'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1537368910025-700350fe46c7?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&q=80&w=800',
-    ]
-  },
-  studio: {
-    id: 'studio',
-    title: 'Studio',
-    cover: 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=800',
-    desc: 'Potret presisi tinggi untuk personal, keluarga, dan profesional.',
-    hasVideo: false,
-    images: [
-      'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1621592484082-2d05b1290d7a?auto=format&fit=crop&q=80&w=800',
-    ]
-  },
-  intimate: {
-    id: 'intimate',
-    title: 'Intimate Wedding',
-    cover: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=800',
-    desc: 'Momen sakral dan hangat bersama orang-orang terdekat.',
-    hasVideo: true,
-    videoId: 'V__GOHvb0X8',
-    images: [
-      'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&q=80&w=800',
-    ]
-  },
-  prewedding: {
-    id: 'prewedding',
-    title: 'Prewedding',
-    cover: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&q=80&w=800',
-    desc: 'Kisah cinta yang diabadikan sebelum mengucap janji suci.',
-    hasVideo: true,
-    videoId: '9AThycGCaks',
-    images: [
-      'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1518105658614-25cb48afad9a?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1482361046637-0226fdcfa3b7?auto=format&fit=crop&q=80&w=800',
-      'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&q=80&w=800',
-    ]
-  }
-};
-
-// --- COMPONENTS ---
-
-// 1. Scroll Reveal Wrapper Component
-const Reveal = ({ children, delay = 0 }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.unobserve(entry.target);
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LakiPhoto | Cerita Untuk Nanti</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter (Minimalist Sans) & Playfair Display (Elegant Serif) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    colors: {
+                        // Palet Warna Kustom dari Referensi Gambar
+                        'laki-bg': '#F3F5F9',        // Soft Light Blue / White
+                        'laki-soft': '#8B9FA7',      // Soft Greyish Blue
+                        'laki-slate': '#5B6C74',     // Dark Slate Blue
+                        'laki-offwhite': '#F2F2F0',  // Warm Off-White
+                        'laki-black': '#000000',     // Pure Black
+                    }
+                }
+            }
         }
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
-
-  return (
-    <div
-      ref={ref}
-      className={`transition-all duration-1000 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      {children}
-    </div>
-  );
-};
-
-// 2. Komponen Gallery Image dengan Skeleton & Blur-Up Effect
-const GalleryImage = ({ src, alt, onClick }) => {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  return (
-    <div 
-      className={`masonry-item rounded-xl overflow-hidden cursor-pointer group relative shadow-md hover:shadow-xl transition-shadow ${
-        !isLoaded ? 'bg-[#9bafb5]/20 animate-pulse min-h-[250px] md:min-h-[350px]' : 'bg-[#f4f5f9]'
-      }`}
-      onClick={onClick}
-    >
-      <div className="absolute inset-0 bg-[#185b98]/0 group-hover:bg-[#185b98]/20 transition-colors z-10 pointer-events-none"></div>
-      <img 
-        src={src} 
-        alt={alt} 
-        onLoad={() => setIsLoaded(true)}
-        className={`w-full h-auto transform transition-all duration-[800ms] ease-out group-hover:scale-105 ${
-          isLoaded ? 'opacity-100 blur-0' : 'opacity-0 blur-md scale-110'
-        }`}
-        loading="lazy"
-      />
-    </div>
-  );
-};
-
-// 3. Main App Component
-export default function App() {
-  const [currentView, setCurrentView] = useState('home'); 
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentView]);
-
-  const navigateTo = (view) => {
-    setCurrentView(view);
-    setIsMobileMenuOpen(false);
-  };
-
-  return (
-    <div className="bg-[#f4f5f9] min-h-screen text-[#100f0f]">
-      <style>{styles}</style>
-      
-      {/* HEADER (Sticky) */}
-      <header className="fixed top-0 left-0 w-full bg-[#f4f5f9]/90 backdrop-blur-md z-50 border-b border-[#9bafb5]/20 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <div 
-            className="cursor-pointer flex flex-col justify-center"
-            onClick={() => navigateTo('home')}
-          >
-            <div className="text-4xl font-poppins text-[#185b98] tracking-tight flex items-center leading-none">
-              <span className="font-bold">Laki</span><span className="font-light">photo.</span>
-            </div>
-            <span className="text-[10px] md:text-[11px] text-[#9bafb5] font-poppins tracking-widest uppercase mt-1.5">
-              Cicalengka, Bandung
-            </span>
-          </div>
-          
-          {/* Desktop Nav */}
-          <nav className="hidden md:flex space-x-4 items-center">
-            <button 
-              onClick={() => {
-                if(currentView !== 'home') navigateTo('home');
-                setTimeout(() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }} 
-              className="border border-[#185b98] text-[#185b98] px-4 py-1.5 rounded font-medium hover:bg-[#185b98] hover:text-white transition-colors text-sm"
-            >
-              Tentang Kami
-            </button>
-            <button 
-              onClick={() => {
-                if(currentView !== 'home') navigateTo('home');
-                setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }), 100);
-              }} 
-              className="border border-[#185b98] text-[#185b98] px-4 py-1.5 rounded font-medium hover:bg-[#185b98] hover:text-white transition-colors text-sm"
-            >
-              Pilihan Produk
-            </button>
-            <a 
-              href={waLink} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="border border-[#185b98] text-[#185b98] px-4 py-1.5 rounded font-medium hover:bg-[#185b98] hover:text-white transition-colors text-sm"
-            >
-              Whatsapp Kami
-            </a>
-          </nav>
-
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden text-[#185b98]"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        </div>
-
-        {/* Mobile Nav */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-[#9bafb5]/20 px-4 py-6 flex flex-col space-y-4 shadow-lg absolute w-full">
-             <button 
-              onClick={() => {
-                if(currentView !== 'home') navigateTo('home');
-                setTimeout(() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' }), 100);
-                setIsMobileMenuOpen(false);
-              }} 
-              className="text-left font-medium text-lg text-[#100f0f]"
-            >
-              Tentang Kami
-            </button>
-             <button 
-              onClick={() => {
-                if(currentView !== 'home') navigateTo('home');
-                setTimeout(() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }), 100);
-                setIsMobileMenuOpen(false);
-              }} 
-              className="text-left font-medium text-lg text-[#100f0f]"
-            >
-              Pilihan Produk
-            </button>
-            <a 
-              href={waLink} 
-              target="_blank" 
-              rel="noreferrer" 
-              className="bg-[#185b98] text-white px-6 py-3 rounded-xl font-medium text-center flex items-center justify-center gap-2 mt-4"
-            >
-              <MessageCircle size={20} /> Hubungi WhatsApp
-            </a>
-          </div>
-        )}
-      </header>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="pt-20 min-h-screen">
-        {currentView === 'home' ? (
-          <LandingPage navigateTo={navigateTo} />
-        ) : (
-          <CategoryPage category={categoriesData[currentView]} onBack={() => navigateTo('home')} />
-        )}
-      </main>
-
-      {/* FOOTER - REVISED */}
-      <footer className="bg-[#f4f5f9] pt-24 pb-12 border-t border-[#9bafb5]/20 mt-10">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <Reveal>
-            <h2 className="text-3xl md:text-4xl font-playfair italic text-[#100f0f] mb-4">Mari ciptakan karya bersama.</h2>
-            <p className="text-[#9bafb5] mb-10 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-              Hubungi kami untuk mendiskusikan konsep, jadwal, dan sentuhan visual yang paling tepat<br className="hidden md:block"/> untuk cerita Anda.
-            </p>
-            <a 
-              href={waLink} 
-              target="_blank" 
-              rel="noreferrer"
-              className="inline-block border border-[#9bafb5] text-[#9bafb5] hover:border-[#185b98] hover:text-[#185b98] text-xs font-semibold tracking-widest py-3.5 px-10 uppercase transition-colors mb-16"
-            >
-              HUBUNGI VIA WHATSAPP
-            </a>
-          </Reveal>
-          
-          <Reveal delay={200}>
-            <div className="flex flex-col items-center">
-              {/* Logo */}
-              <div className="text-2xl font-poppins text-[#100f0f] mb-3">
-                <span className="font-bold">Laki</span><span className="font-light">photo</span>
-              </div>
-              
-              {/* Line Separator */}
-              <div className="w-12 h-[1px] bg-[#9bafb5]/60 mb-6"></div>
-              
-              {/* Social Icons */}
-              <div className="flex items-center gap-5 mb-8 text-[#9bafb5]">
-                <a 
-                  href="https://www.instagram.com/lakiphoto_bandung?igsh=NHE0em40eGNsb2l5" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="hover:text-[#185b98] transition-colors"
-                  aria-label="Instagram Lakiphoto"
-                >
-                  <Instagram size={20} />
-                </a>
-                <a 
-                  href="https://www.tiktok.com/@lakiphoto?_r=1&_t=ZS-94xTwnpJQ4w" 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="hover:text-[#185b98] transition-colors"
-                  aria-label="TikTok Lakiphoto"
-                >
-                  {/* TikTok custom icon path */}
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
-                  </svg>
-                </a>
-              </div>
-              
-              {/* Copyright */}
-              <p className="text-[#9bafb5] text-xs tracking-widest uppercase">
-                &copy; 2026 LAKIPHOTO. ALL RIGHTS RESERVED.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </footer>
-
-      {/* FLOATING WHATSAPP */}
-      <a 
-        href={waLink}
-        target="_blank"
-        rel="noreferrer"
-        className="fixed bottom-6 right-6 z-50 bg-[#185b98] text-white p-4 rounded-full shadow-2xl hover:bg-[#3d85c6] transition-colors group"
-        aria-label="Chat di WhatsApp"
-      >
-        <div className="absolute inset-0 rounded-full bg-[#185b98] animate-ping opacity-75"></div>
-        <MessageCircle size={32} className="relative z-10" />
-        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-white text-[#100f0f] px-4 py-2 rounded-lg shadow-lg font-medium text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-          Tanya harga yuk!
-        </span>
-      </a>
-    </div>
-  );
-}
-
-// --- LANDING PAGE ---
-function LandingPage({ navigateTo }) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  // Auto Slider Global
-  useEffect(() => {
-    const timer = setInterval(() => {
-      // Menggunakan panjang array terbesar jika ada perbedaan
-      const maxLen = Math.max(heroImages.length, bannerImages.length);
-      setCurrentSlide((prev) => (prev + 1) % maxLen);
-    }, 5000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const scrollToProducts = () => {
-    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  return (
-    <div className="w-full bg-[#f4f5f9]">
-      {/* HERO SECTION - REVISED */}
-      <section id="about" className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 min-h-[85vh] flex flex-col justify-center pb-20">
-        <div className="flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-14">
-          {/* Left Content (Text) */}
-          <div className="w-full lg:w-5/12 text-left z-10 pt-4 lg:pt-0">
-            <Reveal>
-              <h1 className="font-cherolina text-6xl md:text-7xl lg:text-8xl text-[#185b98] mb-6 leading-tight drop-shadow-sm">
-                Cerita untuk nanti
-              </h1>
-              <p className="text-[#100f0f] text-sm md:text-base mb-6 leading-relaxed text-justify opacity-90">
-                Lakiphoto adalah brand jasa photography dan videography wedding, intimate wedding, prewedding, dan bahkan memiliki studio di Cicalengka, Bandung. Kami hadir untuk menangkap setiap detail emosi tawa lepas, air mata haru, hingga tatapan penuh cinta dan merangkainya menjadi cerita visual yang abadi dan elegan.
-              </p>
-            </Reveal>
-          </div>
-
-          {/* Right Content (Enlarged Slide Shape) */}
-          <div className="w-full lg:w-7/12 relative z-10 h-full">
-            <Reveal delay={200}>
-              {/* Shape diperbesar */}
-              <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[65vh] rounded-[2.5rem] overflow-hidden shadow-2xl bg-[#3d85c6]">
-                {/* Slider Images */}
-                {heroImages.map((img, index) => (
-                  <div 
-                    key={index}
-                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                      index === currentSlide ? 'opacity-100' : 'opacity-0'
-                    }`}
-                  >
-                    <img 
-                      src={img} 
-                      alt={`Hero ${index}`} 
-                      className="w-full h-full object-cover"
-                    />
-                    {/* Overlay tipis agar menyatu dengan warna brand */}
-                    <div className="absolute inset-0 bg-[#185b98]/10"></div>
-                  </div>
-                ))}
-
-                {/* Slider Indicators */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-20">
-                  {heroImages.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentSlide(idx)}
-                      className={`w-2.5 h-2.5 rounded-full transition-all ${
-                        idx === currentSlide ? 'bg-white w-8' : 'bg-white/50 hover:bg-white'
-                      }`}
-                      aria-label={`Go to slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-
-        {/* BUTTONS DI BAGIAN BAWAH */}
-        <div className="w-full mt-10 lg:mt-14 z-10 flex justify-center lg:justify-start">
-          <Reveal delay={300}>
-              <div className="flex flex-wrap gap-4 items-center">
-                <a 
-                  href={waLink} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="bg-[#185b98] hover:bg-[#3d85c6] text-white px-8 py-3 rounded-lg font-bold text-sm transition-all shadow-md"
-                >
-                  Lanjut Wa aja
-                </a>
-                <button 
-                  onClick={scrollToProducts}
-                  className="border-2 border-[#185b98] text-[#185b98] hover:bg-[#185b98]/5 px-8 py-3 rounded-lg font-bold text-sm transition-all"
-                >
-                  Bentar Liat Liat Dulu
-                </button>
-              </div>
-          </Reveal>
-        </div>
-
-        {/* ANIMATED SCROLL ICON */}
-        <div 
-          onClick={scrollToProducts}
-          className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer text-[#9bafb5] hover:text-[#185b98] transition-colors z-20 animate-bounce"
-        >
-          <ChevronDown size={36} />
-        </div>
-      </section>
-
-      {/* BANNER SEPARATOR - REVISED (Animasi Gambar Berbeda) */}
-      <section className="relative py-24 md:py-32 shadow-inner z-20 overflow-hidden flex items-center bg-[#f4f5f9]">
-        {/* Latar Belakang Slide Gambar */}
-        {bannerImages.map((img, index) => (
-          <div 
-            key={`banner-${index}`}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === (currentSlide % bannerImages.length) ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img 
-              src={img} 
-              alt={`Banner background ${index}`} 
-              className="w-full h-full object-cover"
-            />
-            {/* Overlay transparan biru agar teks terbaca jelas */}
-            <div className="absolute inset-0 bg-[#185b98]/75 backdrop-blur-[2px]"></div>
-          </div>
-        ))}
-
-        {/* Konten Banner */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <Reveal>
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-white">
-              <p className="w-full md:w-1/2 text-left md:text-right text-sm md:text-base opacity-95 leading-relaxed max-w-lg ml-auto drop-shadow-sm">
-                Kami percaya bahwa sebuah foto harus mampu membangkitkan kembali perasaan yang sama saat momen itu terjadi. Dengan pendekatan yang personal dan sinematik, kami memastikan setiap bingkai menceritakan kedalaman kisah Anda secara otentik, memukau, dan bernilai seni tinggi.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* PRODUCTS CATEGORY */}
-      <section id="products" className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <Reveal>
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-poppins text-[#185b98] mb-6">
-              <span className="font-bold">Pilihan</span> <span className="font-light">Produk</span>
-            </h2>
-            <p className="text-[#9bafb5] text-lg md:text-xl max-w-2xl mx-auto">Kami menyediakan berbagai layanan untuk menyesuaikan dengan kebutuhan dokumentasi Anda.</p>
-          </div>
-        </Reveal>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-          {Object.values(categoriesData).map((cat, index) => (
-            <Reveal key={cat.id} delay={index * 100}>
-              <div 
-                className="group relative rounded-3xl overflow-hidden shadow-lg bg-white border border-[#9bafb5]/20 cursor-pointer transform transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl"
-                onClick={() => navigateTo(cat.id)}
-              >
-                <div className="relative h-72 w-full overflow-hidden">
-                  <div className="absolute inset-0 bg-[#185b98]/20 group-hover:bg-transparent transition-colors z-10"></div>
-                  <img 
-                    src={cat.cover} 
-                    alt={cat.title} 
-                    className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-sm font-bold text-[#185b98] z-20 shadow-sm">
-                    {cat.title}
-                  </div>
-                </div>
-                
-                <div className="p-8">
-                  <h3 className="text-3xl font-poppins font-bold text-[#100f0f] mb-3 group-hover:text-[#185b98] transition-colors">{cat.title}</h3>
-                  <p className="text-[#9bafb5] mb-6 line-clamp-2">{cat.desc}</p>
-                  
-                  <button className="flex items-center text-[#185b98] font-bold group-hover:text-[#3d85c6] transition-colors">
-                    Lebih banyak <ChevronRight size={20} className="ml-1 transform transition-transform group-hover:translate-x-2" />
-                  </button>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// --- SUB-CATEGORY PORTFOLIO PAGE ---
-function CategoryPage({ category, onBack }) {
-  const [selectedImage, setSelectedImage] = useState(null);
-
-  return (
-    <div className="w-full bg-[#f4f5f9] min-h-screen pb-20">
-      
-      {/* Page Header */}
-      <div className="bg-[#185b98] text-white py-16 md:py-24 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-           <img src={category.cover} alt="cover bg" className="w-full h-full object-cover" />
-           <div className="absolute inset-0 bg-[#185b98]"></div>
-        </div>
+    </script>
+    <style>
+        /* Custom Utilities for Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <button 
-            onClick={onBack}
-            className="flex items-center text-white/80 hover:text-white mb-8 transition-colors group bg-white/10 px-4 py-2 rounded-full w-fit backdrop-blur-sm"
-          >
-            <ArrowLeft size={20} className="mr-2 transform group-hover:-translate-x-1 transition-transform" /> Kembali ke Beranda
-          </button>
-          
-          <Reveal>
-            <h1 className="text-4xl md:text-6xl font-poppins font-bold mb-4">{category.title}</h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl">{category.desc}</p>
-          </Reveal>
-        </div>
-      </div>
+        /* Masonry Layout */
+        .masonry {
+            column-count: 1;
+            column-gap: 1rem;
+        }
+        @media (min-width: 640px) { .masonry { column-count: 2; } }
+        @media (min-width: 1024px) { .masonry { column-count: 3; } }
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            transition: all 0.4s ease-in-out;
+        }
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12">
-        {/* GALERI FOTO (Masonry) */}
-        <section className="mb-20">
-          <Reveal>
-            <div className="flex items-center justify-between mb-8 border-b border-[#9bafb5]/30 pb-4">
-              <h2 className="text-3xl font-poppins font-bold text-[#100f0f]">Galeri Karya</h2>
-              <span className="text-[#9bafb5] font-cherolina text-3xl">Visual Abadi</span>
+        /* Hero Image Slow Zoom */
+        .img-zoom {
+            transition: transform 8s ease-out;
+        }
+
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #F3F5F9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8B9FA7; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5B6C74; 
+        }
+    </style>
+</head>
+<body class="bg-laki-bg text-laki-slate font-sans antialiased overflow-x-hidden">
+
+    <!-- Sticky Navigation (Minimalist) -->
+    <nav class="fixed w-full z-40 top-0 transition-all duration-300 bg-white/70 backdrop-blur-md py-4" id="navbar">
+        <div class="container mx-auto px-6 flex justify-between items-center">
+            <a href="#" onclick="closeGalleryPage()" class="font-sans text-xl tracking-[0.2em] text-laki-black">
+                <span class="font-bold">LAKI</span><span class="font-light">PHOTO</span>
+            </a>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex space-x-8 text-xs tracking-[0.15em] uppercase text-laki-slate items-center">
+                <a href="#" onclick="closeGalleryPage(); setTimeout(() => document.getElementById('produk').scrollIntoView(), 100)" class="hover:text-laki-black transition">Pilihan Produk</a>
+                <a href="https://wa.me/6281234567890" target="_blank" class="hover:text-laki-black transition">WhatsApp Kami</a>
             </div>
-          </Reveal>
+            
+            <!-- Mobile Menu Icon -->
+            <button id="mobile-menu-btn" class="md:hidden text-laki-slate text-xl focus:outline-none"><i class="fas fa-bars transition-all duration-300"></i></button>
+        </div>
 
-          <div className="masonry-grid">
-            {category.images.map((img, idx) => (
-              <GalleryImage 
-                key={idx} 
-                src={img} 
-                alt={`${category.title} Karya ${idx + 1}`} 
-                onClick={() => setSelectedImage(img)}
-              />
-            ))}
-          </div>
+        <!-- Mobile Dropdown Menu -->
+        <div id="mobile-menu" class="hidden md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-t border-laki-soft/20 shadow-md transition-all duration-300 origin-top">
+            <div class="flex flex-col px-6 py-6 space-y-6 text-sm tracking-[0.15em] uppercase text-laki-slate text-center">
+                <a href="#" onclick="toggleMobileMenu(); closeGalleryPage(); setTimeout(() => document.getElementById('produk').scrollIntoView(), 100)" class="hover:text-laki-black transition block">Pilihan Produk</a>
+                <div class="w-8 h-px bg-laki-soft/30 mx-auto"></div>
+                <a href="https://wa.me/6281234567890" target="_blank" onclick="toggleMobileMenu()" class="hover:text-laki-black transition block">WhatsApp Kami</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- WRAPPER HALAMAN UTAMA (BERANDA) -->
+    <div id="home-page" class="transition-opacity duration-500">
+        
+        <!-- 1. Tahap 1: The Hook (Minimalist Hero) -->
+        <header class="relative h-screen flex items-center justify-center overflow-hidden bg-laki-black" id="hero">
+            
+            <!-- Slider Images -->
+            <div class="absolute inset-0 z-0 w-full h-full">
+                <!-- Slide 1 -->
+                <div class="hero-slide absolute inset-0 transition-opacity duration-1000 opacity-100 z-10">
+                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2069&auto=format&fit=crop" alt="Wedding" class="img-zoom w-full h-full object-cover object-center filter brightness-[0.6] scale-100">
+                </div>
+                <!-- Slide 2 -->
+                <div class="hero-slide absolute inset-0 transition-opacity duration-1000 opacity-0 z-0">
+                    <img src="https://images.unsplash.com/photo-1583939411023-14783179e581?q=80&w=2000&auto=format&fit=crop" alt="Prewedding" class="img-zoom w-full h-full object-cover object-center filter brightness-[0.6] scale-105">
+                </div>
+            </div>
+            
+            <!-- Hero Content Overlay (Minimalist Typography) -->
+            <div class="relative z-20 text-center text-laki-bg px-4 pointer-events-none w-full flex flex-col items-center">
+                <h1 class="font-sans font-extralight text-4xl md:text-6xl tracking-[0.3em] uppercase reveal active" style="transition-delay: 0.2s;">
+                    Lakiphoto
+                </h1>
+                <div class="w-12 h-px bg-laki-bg/50 my-6 reveal active" style="transition-delay: 0.3s;"></div>
+                <p class="font-serif italic text-xl md:text-2xl font-light tracking-wide reveal active text-laki-offwhite" style="transition-delay: 0.4s;">
+                    Cerita untuk nanti
+                </p>
+            </div>
+
+            <!-- Scroll Down Indicator -->
+            <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30 text-laki-bg animate-bounce">
+                <a href="#produk" class="text-lg opacity-60 hover:opacity-100 transition inline-block">
+                    <!-- Vector Arrow Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- 2. Tahap 2: The Teaser (Pilihan Produk) -->
+        <section id="produk" class="py-32 bg-laki-offwhite">
+            <div class="container mx-auto px-6 text-center mb-20 reveal">
+                <h2 class="font-sans font-light text-2xl md:text-3xl mb-6 text-laki-black tracking-[0.1em] uppercase">Pilihan Produk</h2>
+                <div class="w-8 h-px bg-laki-soft mx-auto mb-8"></div>
+                <!-- Soft Selling & Emotional Copywriting -->
+                <p class="max-w-2xl mx-auto text-laki-slate text-base md:text-lg font-light leading-relaxed">
+                    Kami percaya setiap momen memiliki jiwanya sendiri. Dengan penuh <span class="font-serif italic text-laki-black">passion</span>, kami menangkap emosi, tawa, dan air mata bahagia Anda—merangkainya menjadi memori visual yang akan terus hidup dan bercerita, hari ini dan selamanya.
+                </p>
+            </div>
+
+            <!-- Kategori Card yang mengarah ke Page Halaman Galeri -->
+            <div class="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 reveal">
+                <!-- Category 1 -->
+                <div class="relative group cursor-pointer overflow-hidden aspect-[3/4]" onclick="openGalleryPage('wedding')">
+                    <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=1000&auto=format&fit=crop" alt="Wedding" class="w-full h-full object-cover transition duration-700 group-hover:scale-105 filter grayscale-[20%] group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-laki-black/20 group-hover:bg-laki-slate/60 transition duration-500 flex flex-col items-center justify-center p-4">
+                        <h3 class="text-laki-bg text-xl font-sans font-light tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 transition duration-500 translate-y-2 group-hover:translate-y-0">Wedding</h3>
+                    </div>
+                </div>
+                <!-- Category 2 -->
+                <div class="relative group cursor-pointer overflow-hidden aspect-[3/4]" onclick="openGalleryPage('intimate')">
+                    <img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=1000&auto=format&fit=crop" alt="Intimate Wedding" class="w-full h-full object-cover transition duration-700 group-hover:scale-105 filter grayscale-[20%] group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-laki-black/20 group-hover:bg-laki-slate/60 transition duration-500 flex flex-col items-center justify-center p-4">
+                        <h3 class="text-laki-bg text-xl font-sans font-light tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 transition duration-500 translate-y-2 group-hover:translate-y-0 text-center">Intimate Wedding</h3>
+                    </div>
+                </div>
+                <!-- Category 3 -->
+                <div class="relative group cursor-pointer overflow-hidden aspect-[3/4]" onclick="openGalleryPage('prewedding')">
+                    <img src="https://images.unsplash.com/photo-1583939411023-14783179e581?q=80&w=1000&auto=format&fit=crop" alt="Prewedding" class="w-full h-full object-cover transition duration-700 group-hover:scale-105 filter grayscale-[20%] group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-laki-black/20 group-hover:bg-laki-slate/60 transition duration-500 flex flex-col items-center justify-center p-4">
+                        <h3 class="text-laki-bg text-xl font-sans font-light tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 transition duration-500 translate-y-2 group-hover:translate-y-0">Prewedding</h3>
+                    </div>
+                </div>
+                <!-- Category 4 -->
+                <div class="relative group cursor-pointer overflow-hidden aspect-[3/4]" onclick="openGalleryPage('studio')">
+                    <!-- Ganti gambar error dengan potret studio yang baru -->
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop" alt="Studio Foto" class="w-full h-full object-cover transition duration-700 group-hover:scale-105 filter grayscale-[20%] group-hover:grayscale-0">
+                    <div class="absolute inset-0 bg-laki-black/20 group-hover:bg-laki-slate/60 transition duration-500 flex flex-col items-center justify-center p-4">
+                        <h3 class="text-laki-bg text-xl font-sans font-light tracking-[0.15em] uppercase opacity-0 group-hover:opacity-100 transition duration-500 translate-y-2 group-hover:translate-y-0">Studio Foto</h3>
+                    </div>
+                </div>
+            </div>
         </section>
 
-        {/* SECTION VIDEO (Kecuali Studio) */}
-        {category.hasVideo && (
-          <section className="mb-10">
-             <Reveal>
-              <div className="bg-white rounded-3xl p-6 md:p-10 shadow-lg border border-[#9bafb5]/20">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-poppins font-bold text-[#185b98] mb-3">Cinematic Video</h2>
-                  <p className="text-[#9bafb5]">Rasakan kembali emosi momen bahagia Anda melalui mahakarya visual bergerak.</p>
-                </div>
+        <!-- Final CTA Section (Home) -->
+        <section class="py-32 bg-laki-bg text-laki-slate text-center px-4 relative overflow-hidden">
+            <div class="relative z-10 max-w-2xl mx-auto reveal">
+                <h2 class="font-serif italic text-3xl md:text-4xl mb-6 text-laki-black">Mari ciptakan karya bersama.</h2>
+                <p class="font-light mb-12 text-laki-soft">Hubungi kami untuk mendiskusikan konsep, jadwal, dan sentuhan visual yang paling tepat untuk cerita Anda.</p>
                 
-                <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-inner bg-gray-100">
-                  <iframe 
-                    className="absolute top-0 left-0 w-full h-full"
-                    src={`https://www.youtube.com/embed/${category.videoId}?autoplay=0&rel=0`}
-                    title="YouTube video player" 
-                    frameBorder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              </div>
-            </Reveal>
-          </section>
-        )}
-      </div>
-
-      {/* LIGHTBOX MODAL */}
-      {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm">
-          <button 
-            className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors bg-white/10 p-2 rounded-full"
-            onClick={() => setSelectedImage(null)}
-          >
-            <X size={32} />
-          </button>
-          
-          <img 
-            src={selectedImage} 
-            alt="Enlarged view" 
-            className="max-w-full max-h-[90vh] object-contain rounded-md shadow-2xl animate-[fadeIn_0.3s_ease-out]" 
-          />
-        </div>
-      )}
-      
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+                <a href="https://wa.me/6281234567890?text=Halo%20Admin%20LakiPhoto,%20saya%20tertarik%20dengan%20karya%20Anda.%20Boleh%20minta%20informasi%20pricelist?" target="_blank" class="inline-flex items-center justify-center px-8 py-3 border border-laki-slate text-laki-slate bg-transparent hover:bg-laki-slate hover:text-laki-bg transition duration-300 font-sans font-light text-xs tracking-[0.2em] uppercase">
+                    Hubungi via WhatsApp
+                </a>
+            </div>
+        </section>
     </div>
-  );
-}
+    <!-- END WRAPPER HALAMAN UTAMA -->
+
+
+    <!-- WRAPPER HALAMAN GALERI (SPA SYSTEM) -->
+    <!-- Disembunyikan secara default (hidden), muncul saat produk diklik -->
+    <div id="gallery-page" class="hidden min-h-screen bg-laki-bg pt-28 pb-20 opacity-0 transition-opacity duration-500">
+        <div class="container mx-auto px-6">
+            
+            <!-- Tombol Kembali -->
+            <button onclick="closeGalleryPage()" class="mb-12 flex items-center text-laki-soft hover:text-laki-black transition duration-300 font-light text-sm tracking-wider uppercase">
+                <i class="fas fa-arrow-left mr-3"></i> Kembali
+            </button>
+
+            <!-- Header Galeri -->
+            <div class="text-center mb-16">
+                <h2 id="gallery-title" class="font-sans font-light text-3xl md:text-4xl text-laki-black tracking-[0.15em] uppercase mb-4">Portofolio</h2>
+                <p class="font-serif italic text-laki-soft text-lg">Kumpulan cerita yang telah kami abadikan.</p>
+            </div>
+            
+            <!-- Hidden Filter Buttons (Digunakan oleh script untuk memfilter gambar) -->
+            <div class="hidden">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="wedding">Wedding</button>
+                <button class="filter-btn" data-filter="intimate">Intimate Wedding</button>
+                <button class="filter-btn" data-filter="prewedding">Prewedding</button>
+                <button class="filter-btn" data-filter="studio">Studio Foto</button>
+            </div>
+
+            <!-- Kontainer Masonry Galeri (DIPINDAH KE ATAS) -->
+            <div class="masonry mb-24" id="gallery-container">
+                <!-- Gallery Items -->
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="wedding" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="intimate" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="prewedding" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1583939411023-14783179e581?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="studio" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="wedding" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="intimate" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="prewedding" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1544078751-58fee2d8a03b?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="studio" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+                <div class="masonry-item gallery-item group relative overflow-hidden cursor-pointer" data-category="intimate" onclick="openLightbox(this)">
+                    <img src="https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=800&auto=format&fit=crop" class="w-full h-auto object-cover transition duration-700 group-hover:scale-105">
+                </div>
+            </div>
+
+            <!-- Cinematic Video Section (DIPINDAH KE BAWAH) -->
+            <div id="video-section" class="mb-10 hidden transition-all duration-500">
+                <div class="w-16 h-px bg-laki-soft mx-auto mb-16"></div>
+                <h3 class="font-sans font-light text-xl text-laki-black tracking-[0.15em] uppercase mb-8 text-center">Cinematic Video</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    
+                    <!-- Video Wedding -->
+                    <div class="video-item w-full aspect-video shadow-lg" data-category="wedding">
+                        <!-- Ganti link src di bawah ini dengan link EMBED youtube Anda -->
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/ScMzIvxBSi4?si=1Z_1l_G5_N_v_0zH" title="Wedding Cinematic" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-item w-full aspect-video shadow-lg" data-category="wedding">
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/ScMzIvxBSi4?si=1Z_1l_G5_N_v_0zH" title="Wedding Cinematic" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+
+                    <!-- Video Intimate Wedding -->
+                    <div class="video-item w-full aspect-video shadow-lg" data-category="intimate">
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/ScMzIvxBSi4?si=1Z_1l_G5_N_v_0zH" title="Intimate Wedding Cinematic" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+
+                    <!-- Video Prewedding -->
+                    <div class="video-item w-full aspect-video shadow-lg" data-category="prewedding">
+                        <iframe class="w-full h-full" src="https://www.youtube.com/embed/ScMzIvxBSi4?si=1Z_1l_G5_N_v_0zH" title="Prewedding Cinematic" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+
+                </div>
+            </div>
+            
+            <!-- Bottom CTA inside Gallery Page -->
+            <div class="mt-24 text-center">
+                <div class="w-12 h-px bg-laki-soft mx-auto mb-8"></div>
+                <p class="font-serif italic text-laki-slate text-xl mb-6">Ceritakan tentang acara Anda</p>
+                <a href="https://wa.me/6281234567890" target="_blank" class="inline-flex items-center text-laki-black hover:text-laki-soft transition duration-300 font-sans font-medium text-sm tracking-widest uppercase">
+                    Konsultasi via WhatsApp <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                </a>
+            </div>
+
+        </div>
+    </div>
+    <!-- END WRAPPER HALAMAN GALERI -->
+
+
+    <!-- Footer Global -->
+    <footer class="bg-laki-offwhite text-laki-soft py-10 border-t border-laki-soft/20 text-center">
+        <div class="container mx-auto px-6">
+            <h3 class="font-sans font-light text-xl text-laki-black mb-4 tracking-[0.2em] uppercase">Lakiphoto</h3>
+            <div class="flex justify-center space-x-6 mb-6 text-lg">
+                <a href="#" class="hover:text-laki-black transition"><i class="fab fa-instagram"></i></a>
+                <a href="#" class="hover:text-laki-black transition"><i class="fab fa-tiktok"></i></a>
+            </div>
+            <p class="text-xs tracking-wider uppercase font-light">&copy; 2026 LakiPhoto. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Lightbox Modal -->
+    <div id="lightbox" class="fixed inset-0 z-[60] bg-laki-bg/95 backdrop-blur-sm hidden flex items-center justify-center opacity-0 transition-opacity duration-300">
+        <button onclick="closeLightbox()" class="absolute top-6 right-6 text-laki-slate text-4xl hover:text-laki-black transition font-light">&times;</button>
+        <img id="lightbox-img" src="" alt="Fullscreen Image" class="max-h-[90vh] max-w-[95vw] object-contain shadow-sm">
+    </div>
+
+    <!-- Sticky WhatsApp Button -->
+    <a href="https://wa.me/6281234567890?text=Halo%20Admin%20LakiPhoto,%20saya%20ingin%20berkonsultasi..." target="_blank" class="fixed bottom-8 right-8 bg-laki-slate text-laki-bg w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-laki-black hover:scale-110 transition duration-300 z-50 group">
+        <i class="fab fa-whatsapp text-3xl"></i>
+    </a>
+
+    <!-- Scripts for Interactivity -->
+    <script>
+        // --- 0. Mobile Menu Logic ---
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = mobileMenuBtn.querySelector('i');
+
+        function toggleMobileMenu() {
+            mobileMenu.classList.toggle('hidden');
+            if (mobileMenu.classList.contains('hidden')) {
+                menuIcon.classList.remove('fa-times');
+                menuIcon.classList.add('fa-bars');
+            } else {
+                menuIcon.classList.remove('fa-bars');
+                menuIcon.classList.add('fa-times');
+            }
+        }
+
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+
+        // --- 1. SPA / Page Switcher Logic ---
+        const homePage = document.getElementById('home-page');
+        const galleryPage = document.getElementById('gallery-page');
+        const galleryTitle = document.getElementById('gallery-title');
+
+        function openGalleryPage(category) {
+            // Animasi Fade Out Home
+            homePage.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                // Sembunyikan Home, Tampilkan Gallery
+                homePage.classList.add('hidden');
+                galleryPage.classList.remove('hidden');
+                
+                // Animasi Fade In Gallery
+                setTimeout(() => {
+                    galleryPage.classList.remove('opacity-0');
+                    galleryPage.classList.add('opacity-100');
+                }, 50);
+
+                // Ubah Judul Galeri sesuai klik
+                let titleText = category;
+                if(category === 'intimate') titleText = 'Intimate Wedding';
+                if(category === 'studio') titleText = 'Studio Foto';
+                galleryTitle.innerText = titleText;
+
+                // Trigger Filter Function
+                filterGallery(category);
+                
+                // Scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 500); // Waktu yang sama dengan duration-500
+        }
+
+        function closeGalleryPage() {
+            // Jangan lakukan apa-apa jika sudah di halaman home
+            if(!galleryPage.classList.contains('opacity-100')) return;
+
+            // Animasi Fade Out Gallery
+            galleryPage.classList.remove('opacity-100');
+            galleryPage.classList.add('opacity-0');
+
+            setTimeout(() => {
+                // Sembunyikan Gallery, Tampilkan Home
+                galleryPage.classList.add('hidden');
+                homePage.classList.remove('hidden');
+                
+                // Animasi Fade In Home
+                setTimeout(() => {
+                    homePage.classList.remove('opacity-0');
+                }, 50);
+                
+                // Scroll kembali ke bagian produk
+                document.getElementById('produk').scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        }
+
+        // --- 2. Portfolio Filter Logic ---
+        const galleryItems = document.querySelectorAll('.gallery-item');
+        const videoItems = document.querySelectorAll('.video-item');
+        const videoSection = document.getElementById('video-section');
+
+        function filterGallery(filterValue) {
+            // Filter Images
+            galleryItems.forEach(item => {
+                if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
+                    item.style.display = 'block';
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'scale(1)';
+                    }, 50);
+                } else {
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.9)';
+                    setTimeout(() => {
+                        item.style.display = 'none';
+                    }, 400); 
+                }
+            });
+
+            // Filter Videos
+            let hasVideos = false;
+            videoItems.forEach(item => {
+                if (filterValue === 'all' || item.getAttribute('data-category') === filterValue) {
+                    item.style.display = 'block';
+                    hasVideos = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            // Tampilkan atau Sembunyikan Seksi Video
+            if (hasVideos) {
+                videoSection.classList.remove('hidden');
+            } else {
+                videoSection.classList.add('hidden');
+            }
+        }
+
+        // --- 3. Hero Slider Logic ---
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.hero-slide');
+        
+        function nextSlide() {
+            if(slides.length === 0) return;
+            
+            slides[currentSlide].classList.remove('opacity-100', 'z-10');
+            slides[currentSlide].classList.add('opacity-0', 'z-0');
+            
+            const prevImg = slides[currentSlide].querySelector('img');
+            prevImg.classList.remove('scale-100');
+            prevImg.classList.add('scale-105');
+
+            currentSlide = (currentSlide + 1) % slides.length;
+            
+            slides[currentSlide].classList.remove('opacity-0', 'z-0');
+            slides[currentSlide].classList.add('opacity-100', 'z-10');
+            
+            const currentImg = slides[currentSlide].querySelector('img');
+            setTimeout(() => {
+                currentImg.classList.remove('scale-105');
+                currentImg.classList.add('scale-100');
+            }, 50);
+        }
+        
+        // Mulai slider lambat (tiap 7 detik)
+        setInterval(nextSlide, 7000);
+
+        // --- 4. Scroll Animations ---
+        const revealElements = document.querySelectorAll('.reveal');
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    observer.unobserve(entry.target); 
+                }
+            });
+        }, { root: null, threshold: 0.15, rootMargin: "0px 0px -50px 0px" });
+        revealElements.forEach(el => revealObserver.observe(el));
+
+        // --- 5. Navbar Style Logic ---
+        const navbar = document.getElementById('navbar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 50) {
+                navbar.classList.add('shadow-sm', 'bg-laki-bg/95');
+                navbar.classList.remove('bg-white/70');
+            } else {
+                navbar.classList.remove('shadow-sm', 'bg-laki-bg/95');
+                navbar.classList.add('bg-white/70');
+            }
+        });
+
+        // --- 6. Lightbox Logic ---
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightbox-img');
+
+        function openLightbox(element) {
+            const imgSrc = element.querySelector('img').src;
+            lightboxImg.src = imgSrc;
+            lightbox.classList.remove('hidden');
+            setTimeout(() => {
+                lightbox.classList.remove('opacity-0');
+                lightbox.classList.add('opacity-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            lightbox.classList.remove('opacity-100');
+            lightbox.classList.add('opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                lightboxImg.src = ''; 
+            }, 300);
+            document.body.style.overflow = 'auto';
+        }
+
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) { closeLightbox(); }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) { closeLightbox(); }
+        });
+    </script>
+</body>
+</html>
